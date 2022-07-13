@@ -34,54 +34,27 @@ describe ("testing the main contract", async() => {
     BasicERC20Contract = await ethers.getContractFactory("BasicERC20")
     })
 
-    it("should console log the address for exchange", async () => {
-        const provider = waffle.provider;
-
+    it("Should be able to create an exchange contract and return its address", async() => {
         await main.createExchange(erc20_1.address);
+
+        ERC20_1ExchangeAddress = await main.returnExchangeAddress(1);
+  
+
+        expect(await String(ERC20_1ExchangeAddress)).to.not.equal("0x0000000000000000000000000000000000000000")
+    })
+
+    it("Should be able to create an exchange and deposit liquidity of selected token", async() => {
+        await main.createExchange(erc20_1.address);
+
         ERC20_1ExchangeAddress = await main.returnExchangeAddress(1);
         ERC20_1TokenAddress = await main.returnTokenAddress(erc20_1.address)
 
-        await console.log("ERC20 1 address: " + erc20_1.address)
-        await console.log("ERC20 1 Exchange Address: " + ERC20_1ExchangeAddress)
+        let exchangeInstance = await ExchangeContract.attach(ERC20_1ExchangeAddress);
 
-        let returnAddress1 = await main.returnTokenAddress(erc20_1.address);
-        console.log('return address: ' + returnAddress1)
-        expect (returnAddress1 == 1);
+        await erc20_1.connect(acc1).approve( exchangeInstance.address, 1000);
+        await exchangeInstance.connect(acc1).addLiquidity(100, {value: 100});
 
-        let exchangeInstance1 = await ExchangeContract.attach(ERC20_1ExchangeAddress);
-
-        let tokenAddressInExchange = await exchangeInstance1.tokenAddress();
-        console.log("token address in exchange " + tokenAddressInExchange);
-        expect (tokenAddressInExchange == ERC20_1ExchangeAddress)
-        
-        //let bal = await provider.getBalance(acc1.address);
-        //console.log("balance: " + bal);
-//
-        //await acc1.sendTransaction({ 
-        //    to: acc2.address, 
-        //    value: 1
-        //});
-        //bal = await provider.getBalance(acc1.address);
-        //console.log("balance: " + bal);
-        let tokenBalance = await erc20_1.balanceOf(acc1.address);
-        console.log("token balance: " + tokenBalance)
-
-        let ethBalance = await provider.getBalance(acc1.address);
-        console.log("eth balance: " + ethBalance);
-
-        await erc20_1.connect(acc1).approve(exchangeInstance1.address, 1000)
-
-        await exchangeInstance1.connect(acc1).addLiquidity(100, {value: 1});
-
-        tokenBalance = await erc20_1.balanceOf(acc1.address);
-        console.log("token balance: " + tokenBalance)
-
-        ethBalance = await provider.getBalance(acc1.address);
-        console.log("eth balance: " + ethBalance);
-
-
-        //let tokenBalance = await exchangeInstance1.getTokenBalance();
-        //console.log("token balance: " + tokenBalance);
-
+        expect (await exchangeInstance.getEthBalance()).to.not.equal(0);
+        expect (await exchangeInstance.getTokenBalance()).to.not.equal(0);
     })
 })

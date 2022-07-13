@@ -18,11 +18,8 @@ contract Exchange {
         ERC20Token.transferFrom(msg.sender, address(this), _tokenAmount);
     }
 
-    constructor () {
+    constructor (address _tokenAddress) {
         deployer = msg.sender;
-    }
-    function setTokenAddress(address _tokenAddress) public {
-        require(msg.sender == deployer, "only deployer can call this function");
         tokenAddress = _tokenAddress;
     }
 
@@ -33,4 +30,5 @@ contract Exchange {
     function getTokenBalance() public view returns(uint) {
         return tokenBalance;
     }
+
 }

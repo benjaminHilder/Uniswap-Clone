@@ -15,8 +15,7 @@ contract Main {
     }
 
     function createExchange(address _tokenAddress) public {
-        Exchange newExchange = new Exchange();
-        newExchange.setTokenAddress(_tokenAddress);
+        Exchange newExchange = new Exchange(_tokenAddress);
         exchangeAddresses[iterator] = address(newExchange);
         tokenAddresses[iterator] = _tokenAddress;
         tokenExchangeIterator[_tokenAddress] = iterator;
