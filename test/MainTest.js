@@ -28,7 +28,7 @@ describe ("testing the main contract", async() => {
     await erc20_1.deployed();
 
     ERC20_2 = await ethers.getContractFactory("BasicERC20");
-    erc20_2 = await ERC20_1.deploy("ERC20_2", "Token2", acc1.address, 1000);
+    erc20_2 = await ERC20_2.deploy("ERC20_2", "Token2", acc1.address, 1000);
     await erc20_2.deployed();
 
     ExchangeContract = await ethers.getContractFactory("Exchange")
@@ -117,5 +117,39 @@ describe ("testing the main contract", async() => {
 
         expect (BigNumber.from(exchangeEthBalAfter)).to.be.lessThan(await BigNumber.from(exchangeEthBalBefore));
         expect (exchangeTokenBalAfter).to.be.greaterThan(exchangeTokenBalBefore)
+    })
+
+    it.only("Should be able to exchange tokens for tokens", async () => {
+
+        const provider = waffle.provider;
+        await main.createExchange(erc20_1.address);
+        await main.createExchange(erc20_2.address);
+
+        ERC20_1ExchangeAddress = await main.returnExchangeAddress(1);
+        ERC20_2ExchangeAddress = await main.returnExchangeAddress(2);
+    
+        let exchangeInstance1 = await ExchangeContract.attach(ERC20_1ExchangeAddress);
+        let exchangeInstance2 = await ExchangeContract.attach(ERC20_2ExchangeAddress);
+        
+        await erc20_1.connect(acc1).approve( exchangeInstance1.address, 1000);
+        await erc20_2.connect(acc1).approve( exchangeInstance2.address, 1000);
+        
+        await exchangeInstance1.connect(acc1).addLiquidity(100, {value: ethers.utils.parseEther('10')});
+        await exchangeInstance2.connect(acc1).addLiquidity(100, {value: ethers.utils.parseEther('10')});
+        
+        let acc1EthBalBefore = provider.getBalance(acc1.address);
+        let acc1Token1BalBefore = erc20_1.balanceOf(acc1.address);
+        let acc1Token2BalBefore = erc20_2.balanceOf(acc1.address);
+
+        await erc20_1.connect(acc1).approve(main.address, 100);
+        console.log("bal: " + await erc20_1.balanceOf(acc1.address))
+        await main.connect(acc1).swapTokenForToken(erc20_1.address, 100, erc20_2.address);
+        
+        let acc1EthBalAfter = provider.getBalance(acc1.address);
+        let acc1Token1BalAfter = erc20_1.balanceOf(acc1.address);
+        let acc1Token2BalAfter = erc20_2.balanceOf(acc1.address);
+
+        expect (acc1Token1BalAfter).to.be.lessThan(acc1Token1BalBefore);
+        expect (acc1Token2BalAfter).to.be.greaterThan(acc1Token2BalBefore);
     })
 })

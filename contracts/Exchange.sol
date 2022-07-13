@@ -14,6 +14,8 @@ contract Exchange {
         tokenAddress = _tokenAddress;
     }
 
+    receive() external payable {ethBalance += msg.value;}
+
     function addLiquidity(uint _tokenAmount) public payable {
         ERC20 ERC20Token = ERC20(tokenAddress);
         
@@ -22,7 +24,7 @@ contract Exchange {
         ERC20Token.transferFrom(msg.sender, address(this), _tokenAmount);
     }
 
-    function ethToTokenSwap() public payable {
+    function ethToTokenSwap() public payable returns (uint) {
         ERC20 ERC20Token = ERC20(tokenAddress);
 
         uint invariant = ethBalance * tokenBalance;
@@ -32,9 +34,23 @@ contract Exchange {
         tokenBalance -= tokensOut;
         
         ERC20Token.transfer(msg.sender, tokensOut);
+        return (tokensOut);
     }
 
-    function tokenToEthSwap(uint _tokenAmount) public {
+    function ethToTokenSwapNonPayable(uint _ethAmount) public returns (uint) {
+        ERC20 ERC20Token = ERC20(tokenAddress);
+
+        uint invariant = ethBalance * tokenBalance;
+        ethBalance += _ethAmount;
+        uint tokenBalDifference = invariant / ethBalance;
+        uint tokensOut = tokenBalance - tokenBalDifference;
+        tokenBalance -= tokensOut;
+        
+        ERC20Token.transfer(msg.sender, tokensOut);
+        return (tokensOut);
+    }
+
+    function tokenToEthSwap(uint _tokenAmount) public returns (uint){
         //user must approve this contract and token amount before calling this function
         ERC20 ERC20Token = ERC20(tokenAddress);
 
@@ -48,6 +64,7 @@ contract Exchange {
         ethBalance -= ethOut;
 
         payable(msg.sender).transfer(ethOut);
+        return (ethOut);
     }
 
     function getEthBalance() public view returns(uint) {
