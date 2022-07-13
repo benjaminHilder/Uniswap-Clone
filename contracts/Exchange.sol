@@ -9,18 +9,29 @@ contract Exchange {
     uint ethBalance;
     uint tokenBalance;
 
+    constructor (address _tokenAddress) {
+        deployer = msg.sender;
+        tokenAddress = _tokenAddress;
+    }
+
     function addLiquidity(uint _tokenAmount) public payable {
         ERC20 ERC20Token = ERC20(tokenAddress);
-        //require(ERC20Token.balanceOf(msg.sender) <= _tokenAmount);
         
         ethBalance += msg.value;
         tokenBalance += _tokenAmount;
         ERC20Token.transferFrom(msg.sender, address(this), _tokenAmount);
     }
 
-    constructor (address _tokenAddress) {
-        deployer = msg.sender;
-        tokenAddress = _tokenAddress;
+    function ethToTokenSwap() public payable {
+        ERC20 ERC20Token = ERC20(tokenAddress);
+
+        uint invariant = ethBalance * tokenBalance;
+        ethBalance += msg.value;
+        uint tokenBalDifference = invariant / ethBalance;
+        uint tokensOut = tokenBalance - tokenBalDifference;
+        tokenBalance -= tokensOut;
+        
+        ERC20Token.transfer(msg.sender, tokensOut);
     }
 
     function getEthBalance() public view returns(uint) {
