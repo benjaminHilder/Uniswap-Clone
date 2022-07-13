@@ -34,6 +34,22 @@ contract Exchange {
         ERC20Token.transfer(msg.sender, tokensOut);
     }
 
+    function tokenToEthSwap(uint _tokenAmount) public {
+        //user must approve this contract and token amount before calling this function
+        ERC20 ERC20Token = ERC20(tokenAddress);
+
+        ERC20Token.transferFrom(msg.sender, address(this), _tokenAmount);
+
+        uint invariant = ethBalance * tokenBalance;
+        tokenBalance += _tokenAmount;
+        uint ethBalDifference = invariant / tokenBalance;
+        uint ethOut = ethBalance - ethBalDifference;
+
+        ethBalance -= ethOut;
+
+        payable(msg.sender).transfer(ethOut);
+    }
+
     function getEthBalance() public view returns(uint) {
         return ethBalance;
     }
